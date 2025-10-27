@@ -1054,7 +1054,12 @@ func (cli *Client) preparePeerMessageNode(
 		fmt.Printf("DEBUG GREETINGS: preparePeerMessageNode encryption failed for %s: %v\n", to, err)
 		return nil, fmt.Errorf("failed to encrypt peer message for %s: %v", to, err)
 	}
-	content := []waBinary.Node{*encrypted}
+	content := []waBinary.Node{{
+		Tag: "meta",
+		Attrs: waBinary.Attrs{
+			"appdata": "default",
+		},
+	}, *encrypted}
 	if isPreKey && cli.MessengerConfig == nil {
 		content = append(content, cli.makeDeviceIdentityNode())
 	}
