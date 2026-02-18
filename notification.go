@@ -10,6 +10,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"runtime/debug"
 	"slices"
 
 	"google.golang.org/protobuf/proto"
@@ -54,6 +55,12 @@ func (cli *Client) handleEncryptNotification(ctx context.Context, node *waBinary
 }
 
 func (cli *Client) handleAppStateNotification(ctx context.Context, node *waBinary.Node) {
+	defer func() {
+		err := recover()
+		if err != nil {
+			cli.Log.Errorf("App state sync handler panicked: %v\n%s", err, debug.Stack())
+		}
+	}()
 	for _, collection := range node.GetChildrenByTag("collection") {
 		ag := collection.AttrGetter()
 		name := appstate.WAPatchName(ag.String("name"))
