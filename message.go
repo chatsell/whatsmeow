@@ -821,7 +821,14 @@ func (cli *Client) handleProtocolMessage(ctx context.Context, info *types.Messag
 	}
 
 	if protoMsg.GetAppStateSyncKeyShare() != nil {
-		go cli.handleAppStateSyncKeyShare(context.WithoutCancel(ctx), protoMsg.AppStateSyncKeyShare)
+		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					cli.Log.Errorf("Panic in handleAppStateSyncKeyShare: %v\n%s", r, debug.Stack())
+				}
+			}()
+			cli.handleAppStateSyncKeyShare(context.WithoutCancel(ctx), protoMsg.AppStateSyncKeyShare)
+		}()
 	}
 
 	if info.Category == "peer" {
