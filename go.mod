@@ -2,7 +2,7 @@ module go.mau.fi/whatsmeow
 
 go 1.25.0
 
-toolchain go1.26.0
+toolchain go1.25.7
 
 require (
 	github.com/beeper/argo-go v1.1.2
