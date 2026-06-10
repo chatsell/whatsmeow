@@ -861,12 +861,12 @@ Loop:
 	for {
 		select {
 		case node := <-cli.handlerQueue:
-			doneChan := make(chan struct{}, 1)
+			doneChan := make(chan struct{})
 			start := time.Now()
 			go func() {
 				cli.nodeHandlers[node.Tag](evtCtx, node)
 				duration := time.Since(start)
-				doneChan <- struct{}{}
+				close(doneChan)
 				if duration > 5*time.Second {
 					cli.Log.Warnf("Node handling took %s for %s", duration, node.XMLString())
 				}
@@ -960,9 +960,13 @@ func (cli *Client) ParseWebMessage(chatJID types.JID, webMsg *waWeb.WebMessageIn
 		Timestamp: time.Unix(int64(webMsg.GetMessageTimestamp()), 0),
 	}
 	if info.IsFromMe {
-		info.Sender = cli.getOwnID().ToNonAD()
-		if info.Sender.IsEmpty() {
-			return nil, ErrNotLoggedIn
+		if webMsg.GetOriginalSelfAuthorUserJIDString() != "" {
+			info.Sender, err = types.ParseJID(webMsg.GetOriginalSelfAuthorUserJIDString())
+		} else {
+			info.Sender = cli.getOwnID().ToNonAD()
+			if info.Sender.IsEmpty() {
+				return nil, ErrNotLoggedIn
+			}
 		}
 	} else if chatJID.Server == types.DefaultUserServer || chatJID.Server == types.HiddenUserServer || chatJID.Server == types.NewsletterServer {
 		info.Sender = chatJID
