@@ -43,6 +43,9 @@ func (cli *Client) fetchAppState(ctx context.Context, name appstate.WAPatchName,
 	if cli == nil {
 		return nil, ErrClientIsNil
 	}
+	if cli.Store == nil || cli.Store.AppState == nil {
+		return nil, fmt.Errorf("app state store is not initialized")
+	}
 	cli.appStateSyncLock.Lock()
 	defer cli.appStateSyncLock.Unlock()
 	if fullSync {
