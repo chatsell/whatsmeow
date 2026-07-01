@@ -70,6 +70,7 @@ type Client struct {
 	socketWait chan struct{}
 
 	isLoggedIn            atomic.Bool
+	paired                atomic.Bool
 	expectedDisconnect    *exsync.Event
 	forceAutoReconnect    atomic.Bool
 	EnableAutoReconnect   bool
@@ -185,7 +186,10 @@ type Client struct {
 
 	BackgroundEventCtx context.Context
 
-	phoneLinkingCache *phoneLinkingCache
+	phoneLinkingCache    atomic.Pointer[phoneLinkingCache]
+	passkeyLinkingCache  atomic.Pointer[passkeyLinkingCache]
+	passkeyHandoffKey    atomic.Pointer[passkeyHandoffKey]
+	passkeySkipHandoffUX atomic.Bool
 
 	uniqueID  string
 	idCounter atomic.Uint64
@@ -282,6 +286,7 @@ func NewClient(deviceStore *store.Device, log waLog.Logger) *Client {
 
 		BackgroundEventCtx: context.Background(),
 	}
+	cli.paired.Store(deviceStore.ID != nil)
 	cli.nodeHandlers = map[string]nodeHandler{
 		"message":      cli.handleEncryptedMessage,
 		"appdata":      cli.handleEncryptedMessage,
