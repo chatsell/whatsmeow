@@ -23,6 +23,10 @@ var (
 	ErrNotLoggedIn     = errors.New("the store doesn't contain a device JID")
 	ErrMessageTimedOut = errors.New("timed out waiting for message send response")
 
+	// ErrRecipientLIDNotFound is returned before sending any message stanza.
+	// Callers may resolve the phone alias through a contact query and retry.
+	ErrRecipientLIDNotFound = errors.New("no LID found")
+
 	ErrAlreadyConnected = errors.New("websocket is already connected")
 
 	ErrPhoneNumberTooShort           = errors.New("phone number too short")

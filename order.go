@@ -1,7 +1,8 @@
 // Copyright (c) 2024 Chatsell. Fork addition — not part of upstream whatsmeow.
 //
-// This file adds catalog order-details fetching, which upstream whatsmeow does
-// not implement. See GetOrderDetails for details.
+// This file adds catalog order-details fetching, kept alongside upstream's
+// GetOrderDetails because it also parses the seller SKU (retailer_id).
+// See GetCatalogOrderDetails for details.
 
 package whatsmeow
 
@@ -13,7 +14,7 @@ import (
 	"go.mau.fi/whatsmeow/types"
 )
 
-// OrderProduct is a single line item of a catalog order returned by GetOrderDetails.
+// OrderProduct is a single line item of a catalog order returned by GetCatalogOrderDetails.
 type OrderProduct struct {
 	ID         string  // WhatsApp internal product id.
 	RetailerID string  // Seller-defined SKU (== product_retailer_id on the Cloud API, matches the synced e-commerce catalog).
@@ -30,20 +31,24 @@ type OrderDetails struct {
 	TotalCurrency string
 }
 
-// GetOrderDetails fetches the full line items of a catalog order.
+// GetCatalogOrderDetails fetches the full line items of a catalog order.
+//
+// Upstream later added its own GetOrderDetails (business.go), but it does not
+// parse retailer_id (the seller SKU we match against the synced catalog) and
+// fails when creation_ts is missing, so the fork keeps this parser under a
+// different name to avoid merge conflicts.
 //
 // The OrderMessage delivered over the multidevice (QR) socket only carries a
 // summary — item count and total amount — never the individual products.
 // WhatsApp Web resolves the line items with a separate IQ to the `fb:thrift_iq`
 // namespace, using the order id + token that arrive inside the OrderMessage.
-// Upstream whatsmeow never implemented this, so it lives in this fork.
 //
 // The request shape is reverse-engineered from the WhatsApp Web client; the
 // response tag names may drift. On any parse mismatch the raw response is logged
 // at Debug (Node.String()) so the actual shape can be inspected and this parser
 // adjusted. Callers should treat an error OR an empty Products slice as
 // "fall back to the summary".
-func (cli *Client) GetOrderDetails(ctx context.Context, orderID, token string) (*OrderDetails, error) {
+func (cli *Client) GetCatalogOrderDetails(ctx context.Context, orderID, token string) (*OrderDetails, error) {
 	resp, err := cli.sendIQ(ctx, infoQuery{
 		Namespace: "fb:thrift_iq",
 		Type:      iqGet,
