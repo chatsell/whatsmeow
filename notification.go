@@ -429,6 +429,10 @@ func (cli *Client) handleMexNotification(ctx context.Context, node *waBinary.Nod
 		if !ok {
 			continue
 		}
+		// Chatsell patch: scheduled message post/reveal (chatsell_scheduled.go).
+		if cli.handleScheduledMessageMex(mnd, childData) {
+			continue
+		}
 		var wrapper newsLetterEventWrapper
 		err := json.Unmarshal(childData, &wrapper)
 		if err != nil {
@@ -450,6 +454,9 @@ func (cli *Client) handleMexNotification(ctx context.Context, node *waBinary.Nod
 		} else if wrapper.Data.NotifyAccountReachoutTimelock != nil {
 			wrapper.Data.NotifyAccountReachoutTimelock.Mex = mnd
 			cli.dispatchEvent(wrapper.Data.NotifyAccountReachoutTimelock)
+		} else {
+			// Chatsell patch: unknown operations used to vanish without a trace.
+			cli.Log.Infof("Unhandled mex notification %s", mnd.OpName)
 		}
 	}
 }
@@ -535,6 +542,6 @@ func (cli *Client) handleNotification(ctx context.Context, node *waBinary.Node) 
 		}
 	// Other types: business, disappearing_mode, server, status, pay, psa
 	default:
-		cli.Log.Debugf("Unhandled notification with type %s", notifType)
+		cli.Log.Infof("Unhandled notification with type %s: %s", notifType, loggableNode(node))
 	}
 }

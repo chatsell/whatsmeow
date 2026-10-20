@@ -880,6 +880,9 @@ func (cli *Client) handleFrame(ctx context.Context, data []byte, queue chan *waB
 		return
 	}
 	cli.recvLog.Debugf("%s", node)
+	if mentionsScheduling(node, 3) {
+		cli.Log.Warnf("Received stanza that mentions scheduling or reveal: %s", loggableNode(node))
+	}
 	if node.Tag == "xmlstreamend" {
 		if !cli.isExpectedDisconnect() {
 			cli.Log.Warnf("Received stream end frame")
@@ -901,7 +904,7 @@ func (cli *Client) handleFrame(ctx context.Context, data []byte, queue chan *waB
 			}()
 		}
 	} else if node.Tag != "ack" {
-		cli.Log.Debugf("Didn't handle WhatsApp node %s", node.Tag)
+		cli.Log.Infof("Didn't handle WhatsApp node %s: %s", node.Tag, loggableNode(node))
 	}
 }
 

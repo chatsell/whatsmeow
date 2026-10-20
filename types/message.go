@@ -115,6 +115,18 @@ type MessageInfo struct {
 
 	VerifiedName   *VerifiedName
 	DeviceSentMeta *DeviceSentMeta // Metadata for direct messages sent from another one of the user's own devices.
+
+	// Chatsell patch: set when the stanza carries <meta type="scheduled_message">.
+	ScheduledMessage *ScheduledMessageMeta
+}
+
+// ScheduledMessageMeta is the <meta type="scheduled_message"> of a message the
+// account scheduled. RevealKey decrypts its ConditionalRevealMessage; it is nil
+// when the stanza had no valid key (a cancellation carries only the ID).
+type ScheduledMessageMeta struct {
+	ScheduledTimestamp time.Time
+	RevealKeyID        string
+	RevealKey          []byte
 }
 
 // SourceString returns a log-friendly representation of who sent the message and where.

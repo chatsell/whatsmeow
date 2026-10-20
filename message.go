@@ -259,6 +259,14 @@ func (cli *Client) parseMessageInfo(node *waBinary.Node) (*types.MessageInfo, er
 			if err != nil {
 				cli.Log.Warnf("Failed to parse <meta> node in %s: %v", info.ID, err)
 			}
+			// Chatsell patch: scheduled message key (see chatsell_scheduled.go).
+			if scheduled, scheduledErr := parseScheduledMessageMeta(&child); scheduledErr != nil {
+				cli.Log.Warnf("Failed to parse scheduled message <meta> in %s: %v", info.ID, scheduledErr)
+			} else if scheduled != nil {
+				info.ScheduledMessage = scheduled
+				cli.Log.Infof("Message %s carries scheduled message meta: rkid=%s st=%s key_bytes=%d",
+					info.ID, scheduled.RevealKeyID, scheduled.ScheduledTimestamp.UTC().Format(time.RFC3339), len(scheduled.RevealKey))
+			}
 		case "franking":
 			// TODO
 		case "trace":
@@ -488,6 +496,7 @@ func (cli *Client) decryptMessages(ctx context.Context, info *types.MessageInfo,
 	}
 	cli.backgroundIfAsyncAck(func() {
 		if !recognizedStanza {
+			cli.Log.Warnf("Rejecting message %s from %s with no enc child: %s", info.ID, info.SourceString(), loggableNode(node))
 			cli.sendAck(ctx, node, NackUnrecognizedStanza)
 		} else if protobufFailed {
 			cli.sendAck(ctx, node, NackInvalidProtobuf)

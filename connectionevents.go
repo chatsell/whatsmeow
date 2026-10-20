@@ -95,6 +95,8 @@ func (cli *Client) handleIB(ctx context.Context, node *waBinary.Node) {
 			//	err := cli.MarkNotDirty(ctx, typ, ts)
 			//	zerolog.Ctx(ctx).Debug().Err(err).Msg("Marked dirty item as clean")
 			//}()
+		default:
+			cli.Log.Infof("Unhandled ib child %s: %s", child.Tag, loggableNode(&child))
 		}
 	}
 }
